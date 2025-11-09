@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: transcription-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: transcription_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - transcription-network
+
+  backend:
+    build: ./backend
+    container_name: transcription-backend
+    ports:
+      - "8000:8000"
+    environment:
+      MYSQL_URL: mysql+pymysql://root:rootpassword@mysql:3306/transcription_db
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:8000/auth/google/callback}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      AUDIO_STORAGE_PATH: /app/audio_storage
+      FRONTEND_URL: http://localhost:3000
+    volumes:
+      - audio_storage:/app/audio_storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - transcription-network
+
+  frontend:
+    build: ./frontend
+    container_name: transcription-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - transcription-network
+
+volumes:
+  mysql_data:
+  audio_storage:
+
+networks:
+  transcription-network:
+    driver: bridge

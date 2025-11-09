@@ -1,0 +1,26 @@
+.recording-view {
+  height: 100%;
+}
+
+.recording-view-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.recording-controls {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.transcription-section {
+  margin-top: 32px;
+}
+
+.transcription-card {
+  background: #f5f5f5;
+  max-height: 400px;
+  overflow-y: auto;
+}
